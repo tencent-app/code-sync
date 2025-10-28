@@ -1,6 +1,6 @@
 {
   "name": "@tencent-app/code-sync",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A code sync tool for Tencent App",
   "license": "ISC",
   "author": "",
