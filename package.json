@@ -17,9 +17,7 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build"
   },
-  "bin": {
-    "code-sync": "dist/index.js"
-  },
+  "bin": "dist/index.js",
   "keywords": [
     "event-bus",
     "event-emitter",

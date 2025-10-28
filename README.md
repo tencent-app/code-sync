@@ -22,7 +22,7 @@ npm install --save-dev @tencent-app/code-sync
       "name": "shared-components",
       "zipUrl": "https://example.com/code.zip",
       "unzipPath": "./src/shared",
-      "crc64": "optional-checksum-here",
+      "sha256": "optional-sha256-hash-here",
       "auth": "Bearer ${API_TOKEN}",
       "clean": true
     }
@@ -49,7 +49,7 @@ npm run code-sync shared-components
 - **name** (必需): 任務名稱，用於標識和選擇性執行
 - **zipUrl** (必需): ZIP 文件的下載地址
 - **unzipPath** (必需): 解壓到的目標路徑
-- **crc64** (可選): 用於校驗下載文件完整性的 MD5 哈希值
+- **sha256** (可選): 用於校驗下載文件完整性的 SHA256 哈希值
 - **auth** (可選): HTTP Authorization 頭，支持環境變量替換
 - **clean** (可選): 解壓前是否清理目標目錄，默認 false
 
@@ -92,7 +92,7 @@ npm run code-sync shared-components
 1. 讀取 `package.json` 中的 `code-sync` 配置
 2. 對每個任務：
    - 下載 ZIP 文件到系統臨時目錄
-   - 如果配置了 `crc64`，校驗文件完整性
+   - 如果配置了 `sha256`，校驗文件完整性
    - 如果配置了 `clean`，清理目標目錄
    - 解壓文件到指定位置
    - 清理臨時文件
@@ -122,7 +122,7 @@ npm run code-sync shared-components
       "name": "shared-code",
       "zipUrl": "https://api.example.com/files/code.zip",
       "unzipPath": "./src/shared",
-      "crc64": "5d41402abc4b2a76b9719d911017c592",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "auth": "Bearer ${API_TOKEN}",
       "clean": true
     },

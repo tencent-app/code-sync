@@ -16,7 +16,7 @@ interface Task {
   name: string;
   zipUrl: string;
   unzipPath: string;
-  crc64?: string;
+  sha256?: string;
   auth?: string;
   clean?: boolean;
 }
@@ -37,13 +37,11 @@ function replaceEnvVars(str: string): string {
 }
 
 /**
- * Calculate file checksum (using MD5)
+ * Calculate file SHA256 hash
  */
-async function calculateCRC64(filePath: string): Promise<string> {
-  // Using MD5 as checksum (CRC64 is not a standard library in Node.js)
-  // For real CRC64, you need to introduce additional libraries
+async function calculateSHA256(filePath: string): Promise<string> {
   const fileBuffer = await fs.readFile(filePath);
-  const hash = createHash('md5');
+  const hash = createHash('sha256');
   hash.update(fileBuffer);
   return hash.digest('hex');
 }
@@ -130,14 +128,14 @@ async function processTask(task: Task): Promise<void> {
     await downloadFile(task.zipUrl, zipPath, task.auth);
     console.log('  Downloaded');
 
-    // Verify checksum
-    if (task.crc64) {
-      console.log('  Verifying checksum...');
-      const calculatedHash = await calculateCRC64(zipPath);
-      if (calculatedHash !== task.crc64) {
-        throw new Error(`Checksum verification failed! Expected: ${task.crc64}, Got: ${calculatedHash}`);
+    // Verify SHA256
+    if (task.sha256) {
+      console.log('  Verifying SHA256...');
+      const calculatedSHA256 = await calculateSHA256(zipPath);
+      if (calculatedSHA256 !== task.sha256) {
+        throw new Error(`SHA256 verification failed! Expected: ${task.sha256}, Got: ${calculatedSHA256}`);
       }
-      console.log('  Checksum verified');
+      console.log('  SHA256 verified');
     }
 
     // Clean target directory
