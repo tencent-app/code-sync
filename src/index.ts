@@ -8,16 +8,11 @@ import * as os from 'os';
 import * as https from 'https';
 import * as http from 'http';
 import { createWriteStream, existsSync } from 'fs';
-import { createHash } from 'crypto';
-import { pipeline } from 'stream/promises';
-import { Extract } from 'unzipper';
 
 interface Task {
   name: string;
   zipUrl: string;
   unzipPath: string;
-  sha256?: string;
-  auth?: string;
   clean?: boolean;
 }
 
@@ -25,44 +20,20 @@ interface Config {
   'code-sync'?: Task[];
 }
 
-/**
- * Replace environment variables in string
- * Supports ${VAR_NAME} or $VAR_NAME format
- */
-function replaceEnvVars(str: string): string {
-  return str.replace(/\$\{([^}]+)\}|\$([A-Z_][A-Z0-9_]*)/gi, (match, p1, p2) => {
-    const varName = p1 || p2;
-    return process.env[varName] || match;
-  });
-}
-
-/**
- * Calculate file SHA256 hash
- */
-async function calculateSHA256(filePath: string): Promise<string> {
-  const fileBuffer = await fs.readFile(filePath);
-  const hash = createHash('sha256');
-  hash.update(fileBuffer);
-  return hash.digest('hex');
-}
 
 /**
  * Download file
  */
-async function downloadFile(url: string, destPath: string, auth?: string): Promise<void> {
+async function downloadFile(url: string, destPath: string): Promise<void> {
   const parsedUrl = new URL(url);
   const protocol = parsedUrl.protocol === 'https:' ? https : http;
-  
-  const options = {
-    headers: auth ? { Authorization: replaceEnvVars(auth) } : {},
-  };
 
   return new Promise((resolve, reject) => {
-    protocol.get(url, options, (response) => {
+    protocol.get(url, (response) => {
       if (response.statusCode === 302 || response.statusCode === 301) {
         // Handle redirects
         if (response.headers.location) {
-          downloadFile(response.headers.location, destPath, auth)
+          downloadFile(response.headers.location, destPath)
             .then(resolve)
             .catch(reject);
           return;
@@ -94,9 +65,28 @@ async function downloadFile(url: string, destPath: string, auth?: string): Promi
  * Extract ZIP file
  */
 async function unzipFile(zipPath: string, destPath: string): Promise<void> {
-  await fs.mkdir(destPath, { recursive: true });
-  const readStream = (await import('fs')).createReadStream(zipPath);
-  await pipeline(readStream, Extract({ path: destPath }));
+  const unzipper = await import('unzipper');
+  
+  // Read the zip file and extract all entries manually
+  const directory = await unzipper.Open.file(zipPath);
+  
+  // Extract all files
+  await Promise.all(
+    directory.files.map(async (file) => {
+      const filePath = path.join(destPath, file.path);
+      
+      if (file.type === 'Directory') {
+        await fs.mkdir(filePath, { recursive: true });
+      } else {
+        // Ensure parent directory exists
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        
+        // Extract the file
+        const content = await file.buffer();
+        await fs.writeFile(filePath, content);
+      }
+    })
+  );
 }
 
 /**
@@ -125,18 +115,8 @@ async function processTask(task: Task): Promise<void> {
   try {
     // Download file
     console.log('  Downloading...');
-    await downloadFile(task.zipUrl, zipPath, task.auth);
+    await downloadFile(task.zipUrl, zipPath);
     console.log('  Downloaded');
-
-    // Verify SHA256
-    if (task.sha256) {
-      console.log('  Verifying SHA256...');
-      const calculatedSHA256 = await calculateSHA256(zipPath);
-      if (calculatedSHA256 !== task.sha256) {
-        throw new Error(`SHA256 verification failed! Expected: ${task.sha256}, Got: ${calculatedSHA256}`);
-      }
-      console.log('  SHA256 verified');
-    }
 
     // Clean target directory
     if (task.clean) {
