@@ -1,0 +1,29 @@
+{
+  "name": "your-project",
+  "version": "1.0.0",
+  "scripts": {
+    "code-sync": "code-sync",
+    "code-sync:shared": "code-sync shared-code",
+    "code-sync:components": "code-sync components"
+  },
+  "devDependencies": {
+    "@tencent-app/code-sync": "^0.0.2"
+  },
+  "code-sync": [
+    {
+      "name": "shared-code",
+      "zipUrl": "https://example.com/shared-code.zip",
+      "unzipPath": "./src/shared",
+      "clean": true
+    },
+    {
+      "name": "components",
+      "zipUrl": "https://api.example.com/protected/code.zip",
+      "unzipPath": "./src/components",
+      "auth": "Bearer ${API_TOKEN}",
+      "crc64": "5d41402abc4b2a76b9719d911017c592",
+      "clean": false
+    }
+  ]
+}
+

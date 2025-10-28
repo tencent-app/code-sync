@@ -1,0 +1,23 @@
+# Source files
+src/
+tsconfig.json
+eslint.config.mjs
+
+# Tests
+*.test.ts
+*.spec.ts
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Development files
+node_modules/
+*.log
+
